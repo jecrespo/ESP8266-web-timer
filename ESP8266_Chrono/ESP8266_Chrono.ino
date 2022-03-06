@@ -7,6 +7,8 @@
 
 #include <Ticker.h> // Librería para timers
 #include <Arduino.h>
+#include "secrets.h"
+
 Ticker timer;  // creo el objeto timer para el temporizador
 
 //---------------------------------------------------------------
@@ -16,9 +18,11 @@ ESP8266WebServer server(80);  // puerto del Servidor
 
 int contconexion = 0;
 
-// Parámetros para conexión
-const char *ssid = "MIWIFI";
-const char *password = "MIPASSWORD";
+/* Parámetros para conexión en fichero secrets.h
+
+   #define WIFISSID "ssid_miwifi"
+   #define WIFIPASSWORD "password_wifi"
+*/
 
 
 String XML, XML1, XML2, XML3, xmlTemperatura1, xmlTemperatura2, xmlTemperatura3; //aquí añado los strings xmlTemperatura
@@ -54,6 +58,25 @@ String webSite = "<!DOCTYPE html>"
                  "<head>"
                  "<meta charset='utf-8' />"
                  "<title>CronometroVelocistas</title>"
+                 "</head>"
+
+                 // cierro cabecera // aquí empieza lo que voy a mostrar.
+
+                 "<h2>TIEMPOS</h2>" // Titulo en la página
+                 "<body onload='loadDoc()'>"
+                 "<p><a>Primera Vuelta: </a>"  // Título delante del tiempo
+                 "<a id='temperatura1'></a>"
+                 "<a>ms</a></p>" //
+
+                 "<body onload='loadDoc()'>"
+                 "<a>Segunda Vuelta: </a>"  // Título delante del tiempo
+                 "<a id='temperatura2'></a>"
+                 "<a>ms</a></p>"  //
+
+                 "<body onload='loadDoc()'>"
+                 "<a>Tercera  Vuelta: </a>"  // Título delante del tiempo
+                 "<a id='temperatura3'></a>"
+                 "<a>ms</a></p>"
                  "<script type='text/javascript'>"  //el programa javascrip tiene que ir encerrado entre esto y script al final
 
                  "function loadDoc(){"   // crea la función cargar documento
@@ -88,26 +111,6 @@ String webSite = "<!DOCTYPE html>"
                  "  document.getElementById('temperatura3').innerHTML = dato3;"
                  "}"
                  "</script>"
-                 "</head>"
-
-                 // cierro cabecera // aquí empieza lo que voy a mostrar.
-
-                 "<h2>TIEMPOS</h2>" // Titulo en la página
-                 "<body onload='loadDoc()'>"
-                 "<p><a>Primera Vuelta: </a>"  // Título delante del tiempo
-                 "<a id='temperatura1'></a>"
-                 "<a>ms</a></p>" //
-
-                 "<body onload='loadDoc()'>"
-                 "<a>Segunda Vuelta: </a>"  // Título delante del tiempo
-                 "<a id='temperatura2'></a>"
-                 "<a>ms</a></p>"  //
-
-                 "<body onload='loadDoc()'>"
-                 "<a>Tercera  Vuelta: </a>"  // Título delante del tiempo
-                 "<a id='temperatura3'></a>"
-                 "<a>ms</a></p>"
-
                  "</body>"
                  "</html>";
 
@@ -213,7 +216,7 @@ void setup()
   }
 
   // Conexión WIFI
-  WiFi.begin(ssid, password);
+  WiFi.begin(WIFISSID, WIFIPASSWORD);
   while (WiFi.status() != WL_CONNECTED and contconexion < 50) { //Cuenta hasta 50 si no se puede conectar lo cancela
     ++contconexion;
     delay(500);
@@ -221,7 +224,7 @@ void setup()
   }
   if (contconexion < 50) {
 
-    //IP para usar 
+    //IP para usar
     IPAddress ip(192, 168, 1, 156); //192.168.1.100
     IPAddress gateway(192, 168, 1, 1);
 
@@ -255,9 +258,12 @@ void loop()
     float temp1 = Trans1;   // Se supone que lanzo estos tres datos a la Web.
     float temp2 = Trans2;
     float temp3 = Trans3;
-    xmlTemperatura1 = String(temp1, 0); //1 decimal
-    xmlTemperatura2 = String(temp2, 0); //1 decimal
-    xmlTemperatura3 = String(temp3, 0); //1 decimal
+    //xmlTemperatura1 = String(temp1, 0); //1 decimal
+    //xmlTemperatura2 = String(temp2, 0); //1 decimal
+    //xmlTemperatura3 = String(temp3, 0); //1 decimal
+    xmlTemperatura1 = String(millis()/1000); //ejemplo
+    xmlTemperatura2 = String(random(1, 100));
+    xmlTemperatura3 = String(random(200, 1000));
   }
 
   server.handleClient(); // tiene que estar porque si no no conceta
@@ -286,7 +292,7 @@ void handleXML() {
   //server.send(200,"text/xml",XML3);
 }
 void construirXML() {
-  XML1 = "";
+  XML1 = "<TEMPERATURAS>";
   XML1 += "<TEMPERATURA1>";
   XML1 += xmlTemperatura1; //aquí añado otros dos xmlTemperatura
   XML1 += "</TEMPERATURA1>";
@@ -294,10 +300,11 @@ void construirXML() {
   //XML1="";
   XML1 += "<TEMPERATURA2>";
   XML1 += xmlTemperatura2;
-  XML1 += "<TEMPERATURA2>";
+  XML1 += "</TEMPERATURA2>";
 
   //XML1="";
   XML1 += "<TEMPERATURA3>";
   XML1 += xmlTemperatura3;
-  XML1 += "<TEMPERATURA1>";
+  XML1 += "</TEMPERATURA3>";
+  XML1 += "</TEMPERATURAS>";
 }
